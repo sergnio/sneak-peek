@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Heroku PR Preview Environments</title>
+    <style>
+      :root { --ink:#073b3a; --green:#048667; --lime:#97c83b; --paper:#fff; --wash:#f0f8f6; --line:#c9edee; --muted:#545454; --warn:#9d6d00; --danger:#c30000; }
+      * { box-sizing:border-box; } body { margin:0; background:#f1f7f8; color:var(--ink); font:16px/1.5 Arial, sans-serif; } main { max-width:1120px; margin:auto; padding:28px 18px 56px; } h1,h2,h3,p { margin-top:0; } h1 { font-size:clamp(2rem,5vw,3.7rem); line-height:1.04; letter-spacing:-.045em; max-width:800px; } h2 { font-size:1.5rem; margin-bottom:10px; } h3 { font-size:1.05rem; margin-bottom:6px; } .eyebrow { color:var(--green); font-weight:700; letter-spacing:.1em; text-transform:uppercase; font-size:.78rem; } .lead { font-size:1.15rem; max-width:780px; color:var(--muted); } .card { background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:22px; margin:16px 0; box-shadow:0 3px 18px #073b3a0f; } .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; } .three { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; } .badge { display:inline-block; padding:3px 9px; border-radius:999px; background:var(--wash); color:var(--green); font-weight:700; font-size:.8rem; } .warning { border-left:5px solid var(--warn); background:#fff9eb; } .danger { border-left:5px solid var(--danger); background:#fff4f4; } code { background:#edf4f3; padding:2px 5px; border-radius:4px; overflow-wrap:anywhere; } ul,ol { padding-left:21px; } li { margin:7px 0; } table { width:100%; border-collapse:collapse; } th,td { padding:10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; overflow-wrap:anywhere; } th { color:var(--green); } .flow { width:100%; height:auto; display:block; margin:8px 0 4px; } .flow text { fill:var(--ink); font:600 15px Arial,sans-serif; } .flow .small { font:400 13px Arial,sans-serif; fill:var(--muted); } .step { border-top:4px solid var(--green); } .muted { color:var(--muted); } .file { font-family:ui-monospace,monospace; color:var(--green); font-weight:700; } form { display:grid; gap:9px; } label { display:flex; gap:8px; align-items:flex-start; } button { background:var(--green); border:0; border-radius:8px; color:white; cursor:pointer; font-weight:700; padding:10px 14px; width:max-content; } @media(max-width:700px){ .grid,.three { grid-template-columns:1fr; } main{padding:20px 13px 40px;} .card{padding:17px;} }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">Technical plan - Great Clips Web</p>
+      <h1>A disposable, always-current Heroku app for every pull request</h1>
+      <p class="lead">Selected model: a wildcard preview domain plus a dedicated GitHub Actions workflow that creates a named Heroku app per PR. This guarantees the final URL is configured before this Next.js app builds.</p>
+
+      <section class="card">
+        <h2>Target behavior</h2>
+        <div class="three">
+          <div><span class="badge">Open / reopen</span><h3>Create</h3><p>GitHub Actions creates a unique Heroku app, configures its hostname, and posts its URL on the pull request.</p></div>
+          <div><span class="badge">Every push</span><h3>Update</h3><p>The workflow rebuilds the same app from the latest PR head SHA. No manual deploy.</p></div>
+          <div><span class="badge">Close / merge</span><h3>Destroy</h3><p>The cleanup workflow removes the Heroku app, DNS record, and attached ephemeral resources.</p></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Why this is the right fit</h2>
+        <p>Heroku Review Apps handle the basic lifecycle natively, but this application requires a unique <code>NEXT_PUBLIC_URL</code> during its build for Auth0. The selected wildcard-domain model needs a deterministic app name and domain before building, so a dedicated GitHub Actions workflow is the robust implementation. It uses Heroku for the ephemeral runtime and GitHub for the PR lifecycle.</p>
+        <p class="muted">The repo already has a root <code>Procfile</code>, a <code>heroku-postbuild</code> script, and production-like Heroku deployment workflows. The current deploy script deliberately permits only <code>great-clips-dev</code> and <code>great-clips-staging</code>, so the preview workflow must be new and separate.</p>
+      </section>
+
+      <section class="card">
+        <h2>Lifecycle at a glance</h2>
+        <svg class="flow" viewBox="0 0 1000 230" role="img" aria-labelledby="flow-title flow-desc">
+          <title id="flow-title">Pull request preview application lifecycle</title><desc id="flow-desc">A GitHub pull request creates, updates, and finally destroys a Heroku review app.</desc>
+          <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#048667"/></marker></defs>
+          <path id="open-arrow" d="M185 78 H315" stroke="#048667" stroke-width="4" marker-end="url(#arrow)"/><path id="deploy-arrow" d="M505 78 H635" stroke="#048667" stroke-width="4" marker-end="url(#arrow)"/><path id="update-arrow" d="M740 120 C740 195,405 195,405 130" fill="none" stroke="#048667" stroke-width="3" marker-end="url(#arrow)"/><path id="close-arrow" d="M820 78 H930" stroke="#c30000" stroke-width="4" marker-end="url(#arrow)"/>
+          <rect id="pr" x="20" y="35" width="165" height="86" rx="12" fill="#fff" stroke="#c9edee" stroke-width="2"/><text x="102" y="70" text-anchor="middle">GitHub PR</text><text class="small" x="102" y="94" text-anchor="middle">opened / pushed</text>
+          <rect id="pipeline" x="320" y="35" width="185" height="86" rx="12" fill="#f0f8f6" stroke="#048667" stroke-width="2"/><text x="412" y="70" text-anchor="middle">GitHub Actions</text><text class="small" x="412" y="94" text-anchor="middle">PR lifecycle workflow</text>
+          <rect id="app" x="640" y="35" width="180" height="86" rx="12" fill="#fff" stroke="#048667" stroke-width="2"/><text x="730" y="70" text-anchor="middle">PR app</text><text class="small" x="730" y="94" text-anchor="middle">build, release, URL</text>
+          <rect id="destroy" x="930" y="35" width="60" height="86" rx="12" fill="#fff4f4" stroke="#c30000" stroke-width="2"/><text x="960" y="70" text-anchor="middle">PR</text><text class="small" x="960" y="94" text-anchor="middle">closed</text>
+          <text class="small" x="570" y="184" text-anchor="middle">new commit rebuilds the same PR app</text>
+        </svg>
+      </section>
+
+      <section class="card">
+        <h2>Implementation plan</h2>
+        <ol>
+          <li><strong>Establish the preview boundary.</strong> Create a dedicated Heroku team/pipeline area and reserve a DNS namespace such as <code>oci-preview.qa.greatclips.com</code>. Each Heroku app receives its own DNS target, so the lifecycle workflow must create and delete the individual <code>pr-&lt;number&gt;</code> CNAME through the organization's DNS provider API. A wildcard Auth0 allowlist can cover those hostnames, but a single wildcard DNS record is not sufficient to route them to different Heroku apps. Keep <code>great-clips-dev</code>, <code>great-clips-staging</code>, and their deploy workflow unchanged.</li>
+          <li><strong>Use the existing Heroku entry points.</strong> No <code>app.json</code> is required for the selected custom workflow. The existing root <code>Procfile</code> starts <code>yarn start:oci</code>; <code>heroku-postbuild</code> builds the <code>online-check-in</code> workspace, so the current layout is compatible with buildpack deployment. Add <code>app.json</code> later only if the team switches to native Review Apps or needs declarative ephemeral add-ons.</li>
+          <li><strong>Provide config safely.</strong> Store non-secret preview defaults and secrets as GitHub environment variables/secrets, then apply them to each app from the workflow before build. Use preview/test API endpoints, never production credentials. Explicitly exclude local <code>.env.local</code> files from the deployment.</li>
+          <li><strong>Configure authentication and the dynamic URL.</strong> Define <code>pr-&lt;number&gt;.preview.example.com</code> as the URL scheme. Register the wildcard callback/logout URLs with Auth0, then set <code>NEXT_PUBLIC_URL</code> to that exact URL before build. This is required because Next.js embeds public variables into its client bundle.</li>
+          <li><strong>Add dedicated lifecycle workflows.</strong> On trusted <code>pull_request</code> open/synchronize/reopen, derive <code>gci-web-pr-&lt;number&gt;</code>, create/configure the app and custom domain if absent, read Heroku's DNS target, create the PR hostname CNAME through the DNS provider API, set preview config and build metadata, deploy the PR SHA, health-check it, and upsert one sticky preview comment. On <code>pull_request.closed</code>, delete the DNS record and destroy the named app. Use GitHub <code>concurrency</code> keyed by PR number to prevent stale releases. Use scoped Heroku and DNS service credentials stored as GitHub environment secrets.</li>
+          <li><strong>Run one rollout acceptance test, then automate the essentials.</strong> A single test PR must verify preview APIs, Auth0 login/logout, web-to-app encryption, an update at the same URL, and teardown. This is necessary because the workflow crosses GitHub, Heroku, DNS, Auth0, and Next.js build-time configuration. After sign-off, each PR only needs an automated health check; a scheduled orphan cleanup is a low-cost safety net for failed cleanup runs.</li>
+        </ol>
+      </section>
+
+      <section class="grid">
+        <section class="card warning">
+          <h2>Important constraints</h2>
+          <ul>
+            <li><strong>Auth0:</strong> callback and logout allowlists must accept the selected wildcard preview domain. Confirm the tenant's wildcard policy before implementation.</li>
+            <li><strong>Next.js:</strong> <code>NEXT_PUBLIC_*</code> values are compiled into the client build. Changing them after release does not fix the deployed frontend.</li>
+            <li><strong>Costs and limits:</strong> each open PR consumes a Heroku app, dyno, build minutes, and any add-ons. Set a budget alert and an automatic-review-app policy.</li>
+            <li><strong>Data:</strong> previews must point at mock/QA services and use non-production keys. Do not inherit production config.</li>
+          </ul>
+        </section>
+        <section class="card danger">
+          <h2>What not to do</h2>
+          <ul>
+            <li>Do not generalize <code>.github/scripts/deploy-to-heroku.sh</code>. It force-pushes to a shared app and has an explicit two-app allowlist.</li>
+            <li>Do not run previews from forked PRs with organization secrets. Restrict deployments to trusted, same-repository branches.</li>
+            <li>Do not use a long-lived personal API key. Create a dedicated Heroku service account or token with only the needed team/pipeline access, rotate it, and store it as a GitHub Actions secret.</li>
+          </ul>
+        </section>
+      </section>
+
+      <section class="card">
+        <h2>Required tools and access</h2>
+        <table><thead><tr><th>Item</th><th>Required?</th><th>Purpose</th></tr></thead><tbody>
+          <tr><td>Heroku team/pipeline + app access</td><td>Yes</td><td>Hosts the named ephemeral apps; pipeline grouping is recommended.</td></tr>
+          <tr><td>Heroku CLI</td><td>Yes</td><td>Creates/configures/apps, deploys, checks health, and destroys them from Actions.</td></tr>
+          <tr><td><code>app.json</code></td><td>No</td><td>Optional only if native Review Apps or declarative ephemeral add-ons are adopted later.</td></tr>
+          <tr><td>GitHub Actions</td><td>Yes</td><td>Owns trusted-PR lifecycle, ordered config/build/deploy, status, and cleanup. The repository already uses Actions.</td></tr>
+          <tr><td>Auth0 tenant admin access</td><td>Yes</td><td>Allow preview callback/logout URLs or configure an approved wildcard/custom-domain approach.</td></tr>
+          <tr><td>DNS provider API + scoped credential</td><td>Yes</td><td>Creates each PR hostname CNAME against that app's Heroku DNS target, then deletes it during cleanup.</td></tr>
+          <tr><td>Terraform/Pulumi</td><td>No</td><td>Useful only if the team manages Heroku Pipelines, DNS, and Auth0 as infrastructure-as-code.</td></tr>
+        </tbody></table>
+      </section>
+
+      <section class="card">
+        <h2>Names and access to provision</h2>
+        <table><thead><tr><th>Purpose</th><th>Suggested name</th><th>Notes</th></tr></thead><tbody>
+          <tr><td>Heroku pipeline</td><td><code>great-clips-web-previews</code></td><td>Dedicated grouping, budget, and access boundary.</td></tr>
+          <tr><td>Heroku PR app</td><td><code>gci-web-pr-&lt;number&gt;</code></td><td>Example: <code>gci-web-pr-2641</code>. Deterministic for update and teardown.</td></tr>
+          <tr><td>Preview DNS namespace</td><td><code>oci-preview.qa.greatclips.com</code></td><td>Use <code>pr-&lt;number&gt;.oci-preview.qa.greatclips.com</code>. Automate an individual CNAME per app because Heroku supplies a per-app DNS target.</td></tr>
+          <tr><td>Heroku service identity</td><td><code>svc-gci-web-preview-deployer</code></td><td>Team-scoped create/configure/deploy/delete only. Store its token as <code>HEROKU_PREVIEW_API_KEY</code>.</td></tr>
+          <tr><td>GitHub environment</td><td><code>heroku-preview</code></td><td>Holds protected preview-only secrets, reviewer policy, and deployment audit history.</td></tr>
+        </tbody></table>
+        <p><strong>Still required:</strong> Auth0 approval for <code>https://*.oci-preview.qa.greatclips.com</code> as callback/logout URLs, platform-team access to the Heroku team, and a scoped API credential for the authoritative DNS provider. Confirm the expected DNS and Heroku certificate provisioning delay. If Auth0 rejects wildcard URLs, stop before implementation and use an approved fixed preview domain or a no-login preview mode instead.</p>
+      </section>
+
+      <p class="muted">Evidence inspected: <code>Procfile</code>, <code>package.json</code>, <code>scripts/build.sh</code>, <code>.github/workflows/open_new_pr.yml</code>, <code>.github/workflows/common_deploy_to_heroku.yml</code>, <code>.github/scripts/deploy-to-heroku.sh</code>, and <code>apps/online-check-in/.env.local.example</code>.</p>
+    </main>
+  </body>
+</html>
