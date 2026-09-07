@@ -1,7 +1,7 @@
 # Sneak Peek
 
 An idea for a disposable, always-current Heroku app for every pull request on
-great-clips-web: open a PR, get a live preview URL; push a commit, the preview
+any personal server: open a PR, get a live preview URL; push a commit, the preview
 updates; close the PR, the preview is torn down.
 
 See [docs/architecture-plan.html](docs/architecture-plan.html) for the full
